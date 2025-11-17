@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Turkey Typing Tournament 🦃</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #fef3c7;      /* warm tan */
+      --card: #fffbeb;    /* light cream */
+      --ink: #431407;     /* deep brown */
+      --accent: #c2410c;  /* burnt orange */
+      --accent-2: #92400e;/* darker orange */
+      --border: #fed7aa;
+      --muted: #78350f;
+      --good: #15803d;
+      --bad: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #ffedd5 0, #fef3c7 45%, #fefce8 100%);
+      color: var(--ink);
+      display: flex;
+      min-height: 100vh;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 1100px;
+      background: rgba(255, 251, 235, 0.95);
+      border-radius: 1.5rem;
+      border: 3px solid var(--border);
+      box-shadow: 0 18px 40px rgba(120, 53, 15, 0.25);
+      padding: 1.5rem 1.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: clamp(1.8rem, 2.4vw, 2.4rem);
+      margin: 0;
+      color: var(--accent-2);
+      text-shadow: 0 2px 0 #ffedd5;
+      letter-spacing: 0.04em;
+    }
+
+    .turkey-badge {
+      font-size: 2.1rem;
+      filter: drop-shadow(0 2px 1px rgba(120, 53, 15, 0.5));
+    }
+
+    .tagline {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .player-setup {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      background: #fef3c7;
+      border-radius: 999px;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid #fed7aa;
+    }
+
+    .player-setup label {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .player-setup input {
+      border-radius: 999px;
+      border: 1px solid #fed7aa;
+      padding: 0.4rem 0.75rem;
+      min-width: 140px;
+      font-size: 0.95rem;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fffbeb;
+      box-shadow: 0 2px 0 #7c2d12;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    button:hover {
+      background: var(--accent-2);
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #7c2d12;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+      box-shadow: 0 0 0 #7c2d12;
+    }
+
+    .player-status {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 860px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 1rem;
+      padding: 1rem 1.1rem 1.1rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 16px rgba(120, 53, 15, 0.08);
+    }
+
+    .typing-area h2,
+    .leaderboard h2 {
+      margin-top: 0;
+      margin-bottom: 0.65rem;
+      font-size: 1.1rem;
+      color: var(--accent-2);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .typing-area {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .sentence-card {
+      background: #fef3c7;
+      border-radius: 0.9rem;
+      border: 1px dashed #fed7aa;
+      padding: 0.7rem 0.75rem;
+      font-size: 0.98rem;
+      line-height: 1.4;
+      position: relative;
+    }
+
+    .sentence-card::before {
+      content: "✍️ Sentence to type";
+      position: absolute;
+      top: -0.75rem;
+      left: 0.9rem;
+      background: #fef3c7;
+      padding: 0.05rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      border: 1px solid #fed7aa;
+    }
+
+    #targetText {
+      margin: 0;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      resize: vertical;
+      border-radius: 0.8rem;
+      border: 1px solid #fed7aa;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.98rem;
+      font-family: inherit;
+      line-height: 1.4;
+    }
+
+    textarea:focus,
+    input:focus {
+      outline: 2px solid #f97316;
+      outline-offset: 1px;
+      border-color: #f97316;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: space-between;
+    }
+
+    .timer {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.9rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 1.1rem;
+      font-size: 0.9rem;
+      padding-top: 0.4rem;
+      border-top: 1px dashed #fed7aa;
+      margin-top: 0.4rem;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-value {
+      font-weight: 700;
+    }
+
+    .result-message {
+      font-size: 0.9rem;
+    }
+
+    .result-message.good { color: var(--good); }
+    .result-message.bad { color: var(--bad); }
+
+    .leaderboard {
+      max-height: 100%;
+    }
+
+    .leaderboard-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0.5rem 0 0.5rem;
+      max-height: 290px;
+      overflow-y: auto;
+    }
+
+    .leaderboard-list li {
+      display: grid;
+      grid-template-columns: 1.3rem 1fr auto;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.4rem;
+      border-radius: 999px;
+    }
+
+    .leaderboard-list li:nth-child(1) {
+      background: rgba(250, 204, 21, 0.2);
+      font-weight: 700;
+    }
+    .leaderboard-list li:nth-child(2) {
+      background: rgba(249, 115, 22, 0.15);
+      font-weight: 600;
+    }
+    .leaderboard-list li:nth-child(3) {
+      background: rgba(244, 114, 182, 0.15);
+      font-weight: 600;
+    }
+
+    .leaderboard-list li span.place {
+      font-weight: 700;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .leaderboard-list li span.name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .leaderboard-list li span.score {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .lb-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    footer {
+      margin-top: 1.3rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    /* Confetti */
+    .confetti-piece {
+      position: fixed;
+      top: -10px;
+      width: 10px;
+      height: 14px;
+      background: #f97316;
+      opacity: 0.9;
+      border-radius: 2px;
+      pointer-events: none;
+      animation: fall 1.2s linear forwards;
+      z-index: 999;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(110vh) rotate(320deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <div class="turkey-badge">🦃</div>
+      <div>
+        <h1>Turkey Typing Tournament</h1>
+        <p class="tagline">Type fast. Type accurately. Rule the roost!</p>
+      </div>
+    </header>
+
+    <section class="player-setup">
+      <label for="playerName"><strong>Player name:</strong></label>
+      <input id="playerName" type="text" placeholder="Example: Ava R." />
+      <button id="lockNameBtn">Lock Name</button>
+      <span class="player-status" id="playerStatus">Enter your name, then lock it to join the leaderboard.</span>
+    </section>
+
+    <main class="game-layout">
+      <section class="typing-area card">
+        <h2>Typing Arena</h2>
+        <div class="sentence-card">
+          <p id="targetText">Click “Start Round” to get your first Thanksgiving sentence.</p>
+        </div>
+        <textarea id="typingInput" placeholder="Your typing will go here..." disabled></textarea>
+
+        <div class="controls">
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button id="startRoundBtn" disabled>Start Round</button>
+            <button id="submitBtn" disabled>Submit Round</button>
+          </div>
+          <div class="timer">
+            ⏱ <span id="timerDisplay">0.0 s</span>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div>
+            <div class="stat-label">WPM</div>
+            <div class="stat-value" id="wpmStat">0</div>
+          </div>
+          <div>
+            <div class="stat-label">Accuracy</div>
+            <div class="stat-value" id="accuracyStat">0%</div>
+          </div>
+          <div style="flex:1;">
+            <div class="stat-label">Last Result</div>
+            <div class="result-message" id="resultMessage">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="leaderboard card">
+        <h2>Class Leaderboard</h2>
+        <ol class="leaderboard-list" id="leaderboardList">
+          <!-- Scores injected here -->
+        </ol>
+        <p class="lb-note">
+          Shows the top 10 rounds for your class (sorted by WPM, then accuracy).  
+          Leave this open on the board to cheer on your turkeys. 🦃
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <span>Tip: Students should focus on accuracy first, then speed.</span>
+      <span>Happy Thanksgiving typing!</span>
+    </footer>
+  </div>
+
+  <!-- Firebase SDKs (Compat version for simplicity) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <script>
+    // 1) 🔧 PASTE YOUR REAL FIREBASE CONFIG HERE
+    //    Get this from Firebase Console → Project Settings → Your apps → Web App.
+   const firebaseConfig = {
+  apiKey: "AIzaSyCdgAgCChuiHXKx3N9Re1z5bGYoVz_iZAE",
+  authDomain: "cestypingchallenge.firebaseapp.com",
+  projectId: "cestypingchallenge",
+  storageBucket: "cestypingchallenge.firebasestorage.app",
+  messagingSenderId: "1085002897356",
+  appId: "1:1085002897356:web:318e8e0162224a96f4af69",
+  measurementId: "G-40647JYDD0"
+};
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    // Use a path that’s specific to this game/year
+    const scoresRef = db.ref("thanksgivingTypingScores2025");
+
+    // DOM elements
+    const playerNameInput = document.getElementById("playerName");
+    const lockNameBtn = document.getElementById("lockNameBtn");
+    const playerStatus = document.getElementById("playerStatus");
+
+    const targetTextEl = document.getElementById("targetText");
+    const typingInput = document.getElementById("typingInput");
+    const startRoundBtn = document.getElementById("startRoundBtn");
+    const submitBtn = document.getElementById("submitBtn");
+
+    const timerDisplay = document.getElementById("timerDisplay");
+    const wpmStat = document.getElementById("wpmStat");
+    const accuracyStat = document.getElementById("accuracyStat");
+    const resultMessage = document.getElementById("resultMessage");
+    const leaderboardList = document.getElementById("leaderboardList");
+
+    let currentPlayerName = "";
+    let currentSentence = "";
+    let roundActive = false;
+    let startTime = null;
+    let timerInterval = null;
+
+    // Thanksgiving sentences (3rd–5th friendly)
+    const sentences = [
+      "The turkey roasted all morning.",
+      "Pumpkin pie is my favorite dessert.",
+      "We are thankful for friends and family.",
+      "Autumn leaves covered the ground.",
+      "Pilgrims and Wampanoag shared a feast.",
+      "Grandma baked warm cornbread and rolls.",
+      "We passed the mashed potatoes around.",
+      "Our family plays football after dinner.",
+      "The smell of cinnamon fills the kitchen.",
+      "We wrote a list of things we are grateful for.",
+      "Cranberry sauce sparkled in the bowl.",
+      "The campfire kept us warm on a chilly night.",
+      "We shared stories about our Thanksgiving traditions.",
+      "Apple cider steamed in our mugs.",
+      "We set the table with our best plates."
+    ];
+
+    function pickRandomSentence() {
+      const idx = Math.floor(Math.random() * sentences.length);
+      return sentences[idx];
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerDisplay.textContent = "0.0 s";
+    }
+
+    function startTimer() {
+      startTime = performance.now();
+      resetTimer();
+      timerInterval = setInterval(() => {
+        if (!startTime) return;
+        const elapsedMs = performance.now() - startTime;
+        const seconds = elapsedMs / 1000;
+        timerDisplay.textContent = seconds.toFixed(1) + " s";
+      }, 100);
+    }
+
+    function stopTimer() {
+      if (!startTime) return 0;
+      const elapsedMs = performance.now() - startTime;
+      startTime = null;
+      clearInterval(timerInterval);
+      timerInterval = null;
+      return elapsedMs;
+    }
+
+    function calculateAccuracy(target, actual) {
+      if (!target && !actual) return 100;
+      const maxLen = Math.max(target.length, actual.length);
+      let correct = 0;
+      for (let i = 0; i < maxLen; i++) {
+        if (target[i] === actual[i]) correct++;
+      }
+      return (correct / maxLen) * 100;
+    }
+
+    function celebrate() {
+      // Simple confetti burst
+      const pieces = 40;
+      for (let i = 0; i < pieces; i++) {
+        const div = document.createElement("div");
+        div.className = "confetti-piece";
+        div.style.left = Math.random() * 100 + "vw";
+        div.style.backgroundColor = ["#f97316", "#facc15", "#22c55e", "#ec4899"][Math.floor(Math.random() * 4)];
+        div.style.animationDelay = (Math.random() * 0.3) + "s";
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 1600);
+      }
+
+      // Little text cheer
+      resultMessage.classList.remove("bad");
+      resultMessage.classList.add("good");
+      resultMessage.textContent = "Gobble gobble! Great round!";
+    }
+
+    function saveScore(name, wpm, accuracy) {
+      const createdAt = Date.now();
+      scoresRef.push({
+        name,
+        wpm,
+        accuracy,
+        createdAt
+      });
+    }
+
+    function renderLeaderboard(snapshot) {
+      const data = snapshot.val() || {};
+      const rows = Object.values(data);
+
+      // Sort: highest WPM, then highest accuracy, then newest
+      rows.sort((a, b) => {
+        if (b.wpm !== a.wpm) return b.wpm - a.wpm;
+        if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
+        return b.createdAt - a.createdAt;
+      });
+
+      const topTen = rows.slice(0, 10);
+
+      leaderboardList.innerHTML = "";
+      topTen.forEach((row, index) => {
+        const li = document.createElement("li");
+        const place = document.createElement("span");
+        place.className = "place";
+        place.textContent = index + 1 + ".";
+
+        const name = document.createElement("span");
+        name.className = "name";
+        name.textContent = row.name || "Unknown";
+
+        const score = document.createElement("span");
+        score.className = "score";
+        score.textContent = `${row.wpm} WPM • ${row.accuracy.toFixed(0)}%`;
+
+        li.appendChild(place);
+        li.appendChild(name);
+        li.appendChild(score);
+        leaderboardList.appendChild(li);
+      });
+
+      if (topTen.length === 0) {
+        const li = document.createElement("li");
+        li.innerHTML = `<span class="place">–</span><span class="name">No scores yet</span><span class="score">Be the first turkey!</span>`;
+        leaderboardList.appendChild(li);
+      }
+    }
+
+    // Listen for leaderboard changes
+    scoresRef.on("value", renderLeaderboard);
+
+    // Lock player name
+    lockNameBtn.addEventListener("click", () => {
+      const name = playerNameInput.value.trim();
+      if (!name) {
+        playerStatus.textContent = "Please enter a name before locking in.";
+        return;
+      }
+      currentPlayerName = name;
+      playerNameInput.disabled = true;
+      lockNameBtn.disabled = true;
+      startRoundBtn.disabled = false;
+      playerStatus.textContent = `You are locked in as ${currentPlayerName}. Good luck, turkey!`;
+    });
+
+    // Start new round
+    startRoundBtn.addEventListener("click", () => {
+      if (!currentPlayerName) {
+        playerStatus.textContent = "Lock your name before starting a round.";
+        return;
+      }
+
+      currentSentence = pickRandomSentence();
+      targetTextEl.textContent = currentSentence;
+      typingInput.value = "";
+      typingInput.disabled = false;
+      typingInput.focus();
+
+      wpmStat.textContent = "0";
+      accuracyStat.textContent = "0%";
+      resultMessage.textContent = "Type the sentence exactly, then click Submit Round.";
+      resultMessage.classList.remove("good", "bad");
+
+      roundActive = true;
+      submitBtn.disabled = false;
+      startRoundBtn.disabled = true;
+      resetTimer();
+      startTimer();
+    });
+
+    // Submit round
+    submitBtn.addEventListener("click", () => {
+      if (!roundActive) return;
+
+      const elapsedMs = stopTimer();
+      let minutes = elapsedMs / 60000;
+      if (minutes < 0.05) {
+        minutes = 0.05; // avoid wild WPM for super short times
+      }
+
+      const typed = typingInput.value;
+      const charsTyped = typed.length;
+      const rawWpm = (charsTyped / 5) / minutes;
+      const wpm = Math.max(0, Math.round(rawWpm));
+
+      const accuracy = calculateAccuracy(currentSentence, typed);
+      const accuracyRounded = Math.max(0, Math.min(100, Math.round(accuracy)));
+
+      wpmStat.textContent = wpm.toString();
+      accuracyStat.textContent = accuracyRounded + "%";
+
+      if (accuracyRounded < 70) {
+        resultMessage.classList.remove("good");
+        resultMessage.classList.add("bad");
+        resultMessage.textContent = "Keep practicing! Aim for at least 70% accuracy before worrying about speed.";
+      } else {
+        celebrate();
+      }
+
+      // Save to leaderboard
+      saveScore(currentPlayerName, wpm, accuracyRounded);
+
+      typingInput.disabled = true;
+      submitBtn.disabled = true;
+      startRoundBtn.disabled = false;
+      roundActive = false;
+    });
+
+    // Optional: allow pressing Enter+Ctrl to submit (older kids like shortcuts)
+    typingInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (!submitBtn.disabled) {
+          submitBtn.click();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
