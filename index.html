@@ -465,23 +465,25 @@
     let timerInterval = null;
 
     // Thanksgiving sentences (3rd–5th friendly)
-    const sentences = [
-      "The turkey roasted all morning.",
-      "Pumpkin pie is my favorite dessert.",
-      "We are thankful for friends and family.",
-      "Autumn leaves covered the ground.",
-      "Pilgrims and Wampanoag shared a feast.",
-      "Grandma baked warm cornbread and rolls.",
-      "We passed the mashed potatoes around.",
-      "Our family plays football after dinner.",
-      "The smell of cinnamon fills the kitchen.",
-      "We wrote a list of things we are grateful for.",
-      "Cranberry sauce sparkled in the bowl.",
-      "The campfire kept us warm on a chilly night.",
-      "We shared stories about our Thanksgiving traditions.",
-      "Apple cider steamed in our mugs.",
-      "We set the table with our best plates."
-    ];
+  // Thanksgiving paragraphs (each round = about 3 sentences)
+const sentences = [
+  "On Thanksgiving morning, our house smells like turkey and spices. The kitchen counters are covered with pie crusts, cranberries, and fresh rolls. Everyone helps a little, even if it just means taste-testing the food.",
+  
+  "We set the table with our nicest plates and colorful napkins. A big bowl of mashed potatoes sits next to the gravy boat. In the center, a small pumpkin holds a candle that flickers softly.",
+  
+  "Before we eat, each person shares something they are thankful for this year. Some people talk about family and friends, and others mention school and teachers. By the end, the room feels warm with gratitude.",
+  
+  "After dinner, our family likes to go for a walk in the chilly autumn air. The leaves crunch under our shoes, and our breath makes tiny white clouds. We talk, laugh, and point out the brightest stars in the sky.",
+  
+  "My favorite part of Thanksgiving is dessert time. There are slices of pumpkin pie, apple pie, and sometimes even chocolate cake. We add whipped cream on top and pretend we are food judges on a cooking show.",
+  
+  "Our cousins drive for hours just to spend Thanksgiving with us. When they arrive, everyone shouts and runs to the door. The house suddenly feels louder, sillier, and much more fun.",
+  
+  "After we eat, some people watch football while others play board games. The living room fills with cheers, groans, and bursts of laughter. Even the dog curls up nearby, hoping for dropped snacks.",
+  
+  "On the day after Thanksgiving, we like to make turkey sandwiches with the leftovers. We stack turkey, lettuce, and cranberry sauce on fresh bread. Somehow, the leftovers taste just as good as the feast."
+];
+
 
     function pickRandomSentence() {
       const idx = Math.floor(Math.random() * sentences.length);
