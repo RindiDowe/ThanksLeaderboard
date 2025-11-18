@@ -639,42 +639,69 @@ const sentences = [
     });
 
     // Submit round
-    submitBtn.addEventListener("click", () => {
-      if (!roundActive) return;
+    // Submit round
+submitBtn.addEventListener("click", () => {
+  if (!roundActive) return;
 
-      const elapsedMs = stopTimer();
-      let minutes = elapsedMs / 60000;
-      if (minutes < 0.05) {
-        minutes = 0.05; // avoid wild WPM for super short times
-      }
+  const elapsedMs = stopTimer();
+  let minutes = elapsedMs / 60000;
+  if (minutes < 0.05) {
+    minutes = 0.05; // avoid wild WPM for super short times
+  }
 
-      const typed = typingInput.value;
-      const charsTyped = typed.length;
-      const rawWpm = (charsTyped / 5) / minutes;
-      const wpm = Math.max(0, Math.round(rawWpm));
+  const typedRaw = typingInput.value;
+  const typed = typedRaw.trimEnd();       // allow extra spaces at end
+  const target = currentSentence.trimEnd();
 
-      const accuracy = calculateAccuracy(currentSentence, typed);
-      const accuracyRounded = Math.max(0, Math.min(100, Math.round(accuracy)));
+  // 1) Empty or almost empty? No score.
+  if (!typed.trim()) {
+    resultMessage.classList.remove("good");
+    resultMessage.classList.add("bad");
+    resultMessage.textContent = "You must type the full text before submitting.";
+    wpmStat.textContent = "0";
+    accuracyStat.textContent = "0%";
+    return;
+  }
 
-      wpmStat.textContent = wpm.toString();
-      accuracyStat.textContent = accuracyRounded + "%";
+  // 2) Require exact match (including capitals, spaces, punctuation)
+  if (typed !== target) {
+    resultMessage.classList.remove("good");
+    resultMessage.classList.add("bad");
+    resultMessage.textContent = "To earn a score, you must match the text exactly, including capitals, spaces, and punctuation. Check carefully and try again.";
 
-      if (accuracyRounded < 70) {
-        resultMessage.classList.remove("good");
-        resultMessage.classList.add("bad");
-        resultMessage.textContent = "Keep practicing! Aim for at least 70% accuracy before worrying about speed.";
-      } else {
-        celebrate();
-      }
+    // Show that this attempt does NOT earn points
+    wpmStat.textContent = "0";
+    accuracyStat.textContent = "0%";
 
-      // Save to leaderboard
-      saveScore(currentPlayerName, wpm, accuracyRounded);
+    typingInput.disabled = true;
+    submitBtn.disabled = true;
+    startRoundBtn.disabled = false;
+    roundActive = false;
+    return; // ❌ Do NOT save to leaderboard
+  }
 
-      typingInput.disabled = true;
-      submitBtn.disabled = true;
-      startRoundBtn.disabled = false;
-      roundActive = false;
-    });
+  // 3) If we get here, the text matches exactly ✅
+  const charsTyped = typed.length;
+  const rawWpm = (charsTyped / 5) / minutes;
+  const wpm = Math.max(0, Math.round(rawWpm));
+
+  // Exact match → treat accuracy as 100%
+  const accuracyRounded = 100;
+
+  wpmStat.textContent = wpm.toString();
+  accuracyStat.textContent = accuracyRounded + "%";
+
+  celebrate();
+
+  // Save to leaderboard ONLY for correct attempts
+  saveScore(currentPlayerName, wpm, accuracyRounded);
+
+  typingInput.disabled = true;
+  submitBtn.disabled = true;
+  startRoundBtn.disabled = false;
+  roundActive = false;
+});
+
 
     // Optional: allow pressing Enter+Ctrl to submit (older kids like shortcuts)
     typingInput.addEventListener("keydown", (e) => {
@@ -685,6 +712,23 @@ const sentences = [
         }
       }
     });
+    // Optional: allow pressing Enter+Ctrl to submit (older kids like shortcuts)
+typingInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    if (!submitBtn.disabled) {
+      submitBtn.click();
+    }
+  }
+});
+// Prevent pasting so students must actually type
+typingInput.addEventListener("paste", (e) => {
+  e.preventDefault();
+  resultMessage.classList.remove("good");
+  resultMessage.classList.add("bad");
+  resultMessage.textContent = "No pasting allowed — you need to type it yourself.";
+});
+
   </script>
 </body>
 </html>
