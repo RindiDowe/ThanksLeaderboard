@@ -1,5 +1,5 @@
 <script>
-  // 1) 🔧 Your Firebase config
+  // 🔧 Your Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyCdgAgCChuiHXKx3N9Re1z5bGYoVz_iZAE",
     authDomain: "cestypingchallenge.firebaseapp.com",
@@ -8,14 +8,14 @@
     messagingSenderId: "1085002897356",
     appId: "1:1085002897356:web:318e8e0162224a96f4af69",
     measurementId: "G-40647JYDD0"
-    // NOTE: In Firebase console → Realtime Database, grab your database URL
-    // and add: databaseURL: "https://YOUR_DB_URL_HERE"
+    // IMPORTANT:
+    // Add this to make Firebase DB work:
+    // databaseURL: "https://cestypingchallenge-default-rtdb.firebaseio.com"
   };
 
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  // Use a path that’s specific to this game/year
   const scoresRef = db.ref("thanksgivingTypingScores2025");
 
   // DOM elements
@@ -40,7 +40,7 @@
   let startTime = null;
   let timerInterval = null;
 
-  // Thanksgiving paragraphs (each round = about 3 sentences)
+  // Thanksgiving paragraphs
   const sentences = [
     "On Thanksgiving morning, our house smells like turkey and spices. The kitchen counters are covered with pie crusts, cranberries, and fresh rolls. Everyone helps a little, even if it just means taste-testing the food.",
     "We set the table with our nicest plates and colorful napkins. A big bowl of mashed potatoes sits next to the gravy boat. In the center, a small pumpkin holds a candle that flickers softly.",
@@ -53,8 +53,7 @@
   ];
 
   function pickRandomSentence() {
-    const idx = Math.floor(Math.random() * sentences.length);
-    return sentences[idx];
+    return sentences[Math.floor(Math.random() * sentences.length)];
   }
 
   function resetTimer() {
@@ -68,47 +67,53 @@
     resetTimer();
     timerInterval = setInterval(() => {
       if (!startTime) return;
-      const elapsedMs = performance.now() - startTime;
-      const seconds = elapsedMs / 1000;
-      timerDisplay.textContent = seconds.toFixed(1) + " s";
+      const elapsed = (performance.now() - startTime) / 1000;
+      timerDisplay.textContent = elapsed.toFixed(1) + " s";
     }, 100);
   }
 
   function stopTimer() {
-    if (!startTime) return 0;
-    const elapsedMs = performance.now() - startTime;
+    const elapsed = performance.now() - startTime;
     startTime = null;
     clearInterval(timerInterval);
     timerInterval = null;
-    return elapsedMs;
+    return elapsed;
+  }
+
+  function calculateAccuracy(target, actual) {
+    const maxLen = Math.max(target.length, actual.length);
+    let correct = 0;
+
+    for (let i = 0; i < maxLen; i++) {
+      if (target[i] === actual[i]) correct++;
+    }
+
+    return (correct / maxLen) * 100;
   }
 
   function celebrate() {
-    // Simple confetti burst
     const pieces = 40;
     for (let i = 0; i < pieces; i++) {
       const div = document.createElement("div");
       div.className = "confetti-piece";
       div.style.left = Math.random() * 100 + "vw";
       div.style.backgroundColor = ["#f97316", "#facc15", "#22c55e", "#ec4899"][Math.floor(Math.random() * 4)];
-      div.style.animationDelay = (Math.random() * 0.3) + "s";
+      div.style.animationDelay = Math.random() * 0.3 + "s";
       document.body.appendChild(div);
       setTimeout(() => div.remove(), 1600);
     }
 
-    // Little text cheer
     resultMessage.classList.remove("bad");
     resultMessage.classList.add("good");
     resultMessage.textContent = "Gobble gobble! Great round!";
   }
 
   function saveScore(name, wpm, accuracy) {
-    const createdAt = Date.now();
     scoresRef.push({
       name,
       wpm,
       accuracy,
-      createdAt
+      createdAt: Date.now()
     });
   }
 
@@ -116,7 +121,6 @@
     const data = snapshot.val() || {};
     const rows = Object.values(data);
 
-    // Sort: highest WPM, then highest accuracy, then newest
     rows.sort((a, b) => {
       if (b.wpm !== a.wpm) return b.wpm - a.wpm;
       if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
@@ -124,41 +128,122 @@
     });
 
     const topTen = rows.slice(0, 10);
-
     leaderboardList.innerHTML = "";
-    topTen.forEach((row, index) => {
-      const li = document.createElement("li");
-      const place = document.createElement("span");
-      place.className = "place";
-      place.textContent = (index + 1) + ".";
-
-      const name = document.createElement("span");
-      name.className = "name";
-      name.textContent = row.name || "Unknown";
-
-      const score = document.createElement("span");
-      score.className = "score";
-      score.textContent = `${row.wpm} WPM • ${row.accuracy.toFixed(0)}%`;
-
-      li.appendChild(place);
-      li.appendChild(name);
-      li.appendChild(score);
-      leaderboardList.appendChild(li);
-    });
 
     if (topTen.length === 0) {
-      const li = document.createElement("li");
-      li.innerHTML = `<span class="place">–</span><span class="name">No scores yet</span><span class="score">Be the first turkey!</span>`;
-      leaderboardList.appendChild(li);
+      leaderboardList.innerHTML =
+        `<li><span class="place">–</span><span class="name">No scores yet</span><span class="score">Be the first turkey!</span></li>`;
+      return;
     }
+
+    topTen.forEach((row, index) => {
+      leaderboardList.innerHTML += `
+        <li>
+          <span class="place">${index + 1}.</span>
+          <span class="name">${row.name}</span>
+          <span class="score">${row.wpm} WPM • ${row.accuracy}%</span>
+        </li>
+      `;
+    });
   }
 
-  // Listen for leaderboard changes
   scoresRef.on("value", renderLeaderboard);
 
-  // Lock player name
+  // Lock name
   lockNameBtn.addEventListener("click", () => {
     const name = playerNameInput.value.trim();
     if (!name) {
       playerStatus.textContent = "Please enter a name before locking in.";
-      retu
+      return;
+    }
+    currentPlayerName = name;
+    playerNameInput.disabled = true;
+    lockNameBtn.disabled = true;
+    startRoundBtn.disabled = false;
+    playerStatus.textContent = `You are locked in as ${currentPlayerName}. Good luck, turkey!`;
+  });
+
+  // Start round
+  startRoundBtn.addEventListener("click", () => {
+    if (!currentPlayerName) return;
+
+    currentSentence = pickRandomSentence();
+    targetTextEl.textContent = currentSentence;
+
+    typingInput.disabled = false;
+    typingInput.value = "";
+    typingInput.focus();
+
+    wpmStat.textContent = "0";
+    accuracyStat.textContent = "0%";
+    resultMessage.textContent =
+      "Type the text as shown. You need at least 95% accuracy for the round to count.";
+    resultMessage.classList.remove("good", "bad");
+
+    roundActive = true;
+    submitBtn.disabled = false;
+    startRoundBtn.disabled = true;
+
+    resetTimer();
+    startTimer();
+  });
+
+  // Submit round — requires ≥ 95% accuracy
+  submitBtn.addEventListener("click", () => {
+    if (!roundActive) return;
+
+    const typed = typingInput.value;
+
+    if (!typed.trim()) {
+      resultMessage.textContent = "You must type the full text before submitting.";
+      resultMessage.classList.add("bad");
+      wpmStat.textContent = "0";
+      accuracyStat.textContent = "0%";
+      return;
+    }
+
+    const accuracy = calculateAccuracy(currentSentence, typed);
+    const accuracyRounded = Math.round(accuracy);
+
+    accuracyStat.textContent = accuracyRounded + "%";
+
+    // ❌ Too many mistakes — keep typing, timer runs!
+    if (accuracyRounded < 95) {
+      resultMessage.classList.add("bad");
+      resultMessage.textContent =
+        `Accuracy ${accuracyRounded}%. You need at least 95% accuracy. Fix errors and try again.`;
+      return;
+    }
+
+    // ✅ Good enough — count it!
+    const elapsedMs = stopTimer();
+    let minutes = elapsedMs / 60000;
+    if (minutes < 0.05) minutes = 0.05;
+
+    const wpm = Math.round((typed.length / 5) / minutes);
+    wpmStat.textContent = wpm;
+
+    celebrate();
+    saveScore(currentPlayerName, wpm, accuracyRounded);
+
+    typingInput.disabled = true;
+    submitBtn.disabled = true;
+    startRoundBtn.disabled = false;
+    roundActive = false;
+  });
+
+  // Ctrl+Enter or Cmd+Enter submits
+  typingInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (!submitBtn.disabled) submitBtn.click();
+    }
+  });
+
+  // No pasting allowed
+  typingInput.addEventListener("paste", (e) => {
+    e.preventDefault();
+    resultMessage.classList.add("bad");
+    resultMessage.textContent = "No pasting — you must type it yourself.";
+  });
+</script>
